@@ -1,0 +1,52 @@
+name: SonarCloud Analysis for AWS SDK Java v2
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Untuk memungkinkan menjalankan workflow secara manual
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout AWS SDK Java v2
+        uses: actions/checkout@v3
+        with:
+          repository: aws/aws-sdk-java-v2
+          ref: master  # Anda bisa mengubah ke branch atau tag spesifik
+          fetch-depth: 0  # Disarankan untuk SonarCloud untuk mendapatkan full git history
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+      
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Generate from SonarCloud
+        run: |
+          mvn -B clean verify
+          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711 \
+            -Dsonar.organization=shikitoka123 \
+            -Dsonar.host.url=https://sonarcloud.io
