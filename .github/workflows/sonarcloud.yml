@@ -48,7 +48,7 @@ jobs:
           sonar.sources=src
           
           # Pengaturan direktori test berdasarkan struktur yang terlihat
-          sonar.tests=src/test
+          sonar.tests=test
           
           # Pengaturan exclusions dan inclusions
           sonar.exclusions=**/target/**/*,**/.git/**/*,**/resources/**/*,**/pom.xml
