@@ -45,12 +45,26 @@ jobs:
         # Melewati (skip) tes yang gagal dengan -DskipTests
         # Tetapi tetap memungkinkan SonarCloud untuk menjalankan analisis kode
         run: |
-          mvn -B clean compile -DskipTests
-          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
-      
-      # Langkah opsional untuk menghasilkan laporan jacoco meskipun tes dilewati
-      - name: Generate JaCoCo coverage report (optional)
-        run: |
-          # Menjalankan tes tertentu yang tidak gagal (jika ada) atau membuat laporan kosong
-          mvn -B jacoco:prepare-agent test jacoco:report -Dmaven.test.failure.ignore=true
-        continue-on-error: true
+          # Menggunakan Maven Wrapper jika ada
+          if [ -f "./mvnw" ]; then
+            chmod +x ./mvnw
+            ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711 -Dsonar.java.source=1.8 -Dsonar.java.binaries=target/classes -Dsonar.sources=. -Dsonar.skipCompile=true
+          else
+            mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711 -Dsonar.java.source=1.8 -Dsonar.java.binaries=target/classes -Dsonar.sources=. -Dsonar.skipCompile=true
+          fi
+
+      # Alternatif: Menggunakan SonarScanner langsung jika Maven Sonar Plugin gagal
+      - name: SonarCloud Scan with SonarScanner (fallback)
+        if: ${{ failure() }}
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
+            -Dsonar.organization=shikitoka123
+            -Dsonar.sources=.
+            -Dsonar.java.source=1.8
+            -Dsonar.java.binaries=target/classes
+            -Dsonar.exclusions=**/test/**/*,**/target/**/*,**/.git/**/*
