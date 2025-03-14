@@ -38,33 +38,33 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       
-      - name: Build and analyze with skip tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Generate from SonarCloud
-        # Melewati (skip) tes yang gagal dengan -DskipTests
-        # Tetapi tetap memungkinkan SonarCloud untuk menjalankan analisis kode
+      - name: Create sonar-project.properties
         run: |
-          # Menggunakan Maven Wrapper jika ada
-          if [ -f "./mvnw" ]; then
-            chmod +x ./mvnw
-            ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711 -Dsonar.java.source=1.8 -Dsonar.java.binaries=target/classes -Dsonar.sources=. -Dsonar.skipCompile=true
-          else
-            mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711 -Dsonar.java.source=1.8 -Dsonar.java.binaries=target/classes -Dsonar.sources=. -Dsonar.skipCompile=true
-          fi
-
-      # Alternatif: Menggunakan SonarScanner langsung jika Maven Sonar Plugin gagal
-      - name: SonarCloud Scan with SonarScanner (fallback)
-        if: ${{ failure() }}
+          cat > sonar-project.properties << EOF
+          sonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
+          sonar.organization=shikitoka123
+          
+          # PENTING: Tidak menggunakan wildcard pada sources dan tests
+          sonar.sources=core,services,http-client,utils,test,profiles,identity-spi,legacy-test-support
+          sonar.tests=core/src/test,services/src/test,http-client/src/test
+          
+          # Pengaturan inclusions dan exclusions (gunakan wildcard di sini)
+          sonar.exclusions=**/target/**/*,**/.git/**/*,**/test-resources/**/*
+          sonar.test.inclusions=**/*Test.java,**/*Tests.java
+          
+          # Pengaturan lainnya
+          sonar.java.source=1.8
+          sonar.java.binaries=target/classes
+          EOF
+      
+      # Menjalankan SonarScanner langsung
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          # Tidak menyertakan args dengan wildcard
           args: >
             -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
             -Dsonar.organization=shikitoka123
-            -Dsonar.sources=.
-            -Dsonar.java.source=1.8
-            -Dsonar.java.binaries=target/classes
-            -Dsonar.exclusions=**/test/**/*,**/target/**/*,**/.git/**/*
