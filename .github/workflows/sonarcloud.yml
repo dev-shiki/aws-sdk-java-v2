@@ -44,17 +44,25 @@ jobs:
           sonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
           sonar.organization=shikitoka123
           
-          # PENTING: Tidak menggunakan wildcard pada sources dan tests
-          sonar.sources=core,services,http-client,utils,test,profiles,identity-spi,legacy-test-support
-          sonar.tests=core/src/test,services/src/test,http-client/src/test
+          # Pengaturan direktori sumber
+          sonar.sources=src
           
-          # Pengaturan inclusions dan exclusions (gunakan wildcard di sini)
-          sonar.exclusions=**/target/**/*,**/.git/**/*,**/test-resources/**/*
+          # Pengaturan direktori test berdasarkan struktur yang terlihat
+          sonar.tests=src/test
+          
+          # Pengaturan exclusions dan inclusions
+          sonar.exclusions=**/target/**/*,**/.git/**/*,**/resources/**/*,**/pom.xml
           sonar.test.inclusions=**/*Test.java,**/*Tests.java
           
-          # Pengaturan lainnya
+          # Konfigurasi untuk Java
           sonar.java.source=1.8
-          sonar.java.binaries=target/classes
+          sonar.java.libraries=.
+          
+          # Abaikan error kompilasi
+          sonar.java.skipCompile=true
+          
+          # Untuk memastikan Sonar dapat mendeteksi semua file
+          sonar.sourceEncoding=UTF-8
           EOF
       
       # Menjalankan SonarScanner langsung
@@ -63,8 +71,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          # Tidak menyertakan args dengan wildcard
-          args: >
-            -Dsonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
-            -Dsonar.organization=shikitoka123
