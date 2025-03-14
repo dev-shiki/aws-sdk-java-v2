@@ -38,31 +38,31 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       
+      - name: List directory structure
+        run: |
+          # List top-level directories to understand project structure
+          ls -la
+          
+          # Try to find test folders
+          find . -type d -name "test" | grep -v "target" | head -10
+      
       - name: Create sonar-project.properties
         run: |
           cat > sonar-project.properties << EOF
           sonar.projectKey=dc6a14762cab506ad576525ecce727d6af482711
           sonar.organization=shikitoka123
           
-          # Pengaturan direktori sumber
-          sonar.sources=src
-          
-          # Pengaturan direktori test berdasarkan struktur yang terlihat
-          sonar.tests=test
+          # Pengaturan sumber tanpa direktori tes spesifik
+          sonar.sources=.
           
           # Pengaturan exclusions dan inclusions
-          sonar.exclusions=**/target/**/*,**/.git/**/*,**/resources/**/*,**/pom.xml
+          sonar.exclusions=**/target/**/*,**/.git/**/*,**/test/**/*
           sonar.test.inclusions=**/*Test.java,**/*Tests.java
           
-          # Konfigurasi untuk Java
+          # Pengaturan lainnya
           sonar.java.source=1.8
-          sonar.java.libraries=.
-          
-          # Abaikan error kompilasi
+          sonar.java.binaries=.
           sonar.java.skipCompile=true
-          
-          # Untuk memastikan Sonar dapat mendeteksi semua file
-          sonar.sourceEncoding=UTF-8
           EOF
       
       # Menjalankan SonarScanner langsung
